@@ -14,7 +14,7 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <style type="text/css">
-      rect {
+      g {
         cursor: move;
       }
     </style>
@@ -68,24 +68,36 @@
     <script src="Scripts/svg.select.js"></script>
     <script type="text/javascript">
       var idSVGDocument = document.getElementById("svgDocument");
-      var x = 0, y = 0
-      var svgDocument = SVG('svgDocument').size((idSVGDocument.offsetWidth - 3), idSVGDocument.offsetHeight).fill('#f06')
+      var x = 0, y = 0, reciepentSelected, fillColor;
+      var objStore = [];
+      var svgDocument = SVG('svgDocument').size((idSVGDocument.offsetWidth - 3), idSVGDocument.offsetHeight).fill('#f06');
+      var textFontProperties = { family: 'Helvetica', size: 19, leading: '1.5em' };
       // --> Method to get left and Top of element in js.
       // --> var coord = svgDocument.getBoundingClientRect();
       // --> alert('Left - ' + coord.left + ' | Top - ' + coord.top)
-      var objStore = [];
-      var reciepentSelected = document.getElementById('ddReciepent').value  //'Reciepent1ID'
+
+      function pageLoad() {
+        reciepentSelected = document.getElementById('ddReciepent').value;  //'Reciepent1ID'
+        fillColor = parseInt(reciepentSelected) == 1 ? '#ddeaff' : '#ffffe6'; // Default tag color
+      }
+      window.onload = pageLoad;  // invoke pageLoad after all content is loaded
 
       // Signature function
       document.getElementById("idSignature").onclick = function() {
         x = x + 10
         y = y + 10
-        var signaturePoint = svgDocument.rect(150, 50).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var signaturePoint = svgDocument.group().move(x,y)
         var currentTimestamp = new Date().getTime();
         signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
         signaturePoint.draggable();
+
+        var signaturePointBox = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 })
+        signaturePoint.add(signaturePointBox)
+        var text = svgDocument.text("Signature").move(35,10).font(textFontProperties)
+        signaturePoint.add(text)
+        //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
+
         addMouseEvents(signaturePoint);
-        //signaturePoint.selectize();
         addElementProperties(signaturePoint, 'SIGN')
       }
 
@@ -93,7 +105,7 @@
       document.getElementById("idDateSigned").onclick = function() {
         x = x + 10
         y = y + 10
-        var dateSigned = svgDocument.rect(150, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var dateSigned = svgDocument.rect(150, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
         var currentTimestamp = new Date().getTime();
         dateSigned.attr('id', 'dateSigned' + currentTimestamp);
         dateSigned.draggable();
@@ -106,7 +118,7 @@
       document.getElementById("idTextField").onclick = function() {
         x = x + 10
         y = y + 10
-        var textField = svgDocument.rect(300, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var textField = svgDocument.rect(300, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
         var currentTimestamp = new Date().getTime();
         textField.attr('id', 'textField' + currentTimestamp);
         textField.draggable();
@@ -119,7 +131,7 @@
       document.getElementById("idCheckBox").onclick = function() {
         x = x + 10
         y = y + 10
-        var checkBox = svgDocument.rect(30, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var checkBox = svgDocument.rect(30, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
         var currentTimestamp = new Date().getTime();
         checkBox.attr('id', 'checkBox' + currentTimestamp);
         checkBox.radius(50);
@@ -144,8 +156,8 @@
         // Setting default values
         elProperties.id = el.attr('id');
         elProperties.type = type;
-        elProperties.x = el.attr('x');
-        elProperties.y = el.attr('y');
+        elProperties.x = el.gbox().x; //el.attr('x');
+        elProperties.y = el.gbox().y; //el.attr('y');
         elProperties.RecipientDetails = reciepentSelected
         objStore.push(elProperties);
       }
@@ -166,12 +178,13 @@
         this.instance.selectize(false)
         var elementID = this.instance.attr('id')
         var elProperties = objStore.find(x => x.id === elementID);
-        elProperties.x = this.instance.attr('x')
-        elProperties.y = this.instance.attr('y')
+        elProperties.x = this.instance.gbox().x; //.attr('x')
+        elProperties.y = this.instance.gbox().y; //.attr('y')
       }
 
       function getSelectedReciepent(recp) {
-        reciepentSelected = recp
+        reciepentSelected = recp;
+        fillColor = (parseInt(recp) == 1) ? '#ddeaff' : '#ffffe6';
       }
     </script>
   </body>
