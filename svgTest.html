@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SVG Library - Funstions for Esigning</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/svg.select.css">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      rect {
+        cursor: move;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="text-center">eSigning Sample</h1>
+    <hr class="separator" />
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group text-center">
+            <label for="ddReciepent"> Select Reciepent</label>
+            <select id="ddReciepent" class="form-control" onchange="getSelectedReciepent(this.value)">
+              <option value="1" selected>Reciepent 1</option>
+              <option value="2">Reciepent 2</option>
+            </select>
+            <p class="help-block">Adds tags for selected reciepents</p>
+          </div>
+          <hr />
+          <table style="width: 100%;">
+            <tr>
+              <td style="padding: 10px;">
+                <button type="button" class="btn btn-block" id="idTextField"> Text Field </button>
+              </td>
+              <td style="padding: 10px;">
+                <button type="button" class="btn btn-block" id="idSignature"> Signature </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 10px;">
+                <button type="button" class="btn btn-block" id="idDateSigned"> Date Signed </button>
+              </td>
+              <td style="padding: 10px;">
+                <button type="button" class="btn btn-block" id="idCheckBox"> CheckBox </button>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-9">
+          <div id="svgDocument" style="border: 1px solid black; min-height: 600px; overflow-y: auto;"></div>
+        </div>
+        <div class="clearfix"> </div>
+        <br />
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="Scripts/svg.js"></script>
+    <!-- <script src="Scripts/svg.import.js"></script> -->
+    <script src="Scripts/svg.draggable.js"></script>
+    <script src="Scripts/svg.select.js"></script>
+    <script type="text/javascript">
+      var idSVGDocument = document.getElementById("svgDocument");
+      var x = 0, y = 0
+      var svgDocument = SVG('svgDocument').size((idSVGDocument.offsetWidth - 3), idSVGDocument.offsetHeight).fill('#f06')
+      // --> Method to get left and Top of element in js.
+      // --> var coord = svgDocument.getBoundingClientRect();
+      // --> alert('Left - ' + coord.left + ' | Top - ' + coord.top)
+      var objStore = [];
+      var reciepentSelected = document.getElementById('ddReciepent').value  //'Reciepent1ID'
+
+      // Signature function
+      document.getElementById("idSignature").onclick = function() {
+        x = x + 10
+        y = y + 10
+        var signaturePoint = svgDocument.rect(150, 50).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var currentTimestamp = new Date().getTime();
+        signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
+        signaturePoint.draggable();
+        addMouseEvents(signaturePoint);
+        //signaturePoint.selectize();
+        addElementProperties(signaturePoint, 'SIGN')
+      }
+
+      // Date Signed function
+      document.getElementById("idDateSigned").onclick = function() {
+        x = x + 10
+        y = y + 10
+        var dateSigned = svgDocument.rect(150, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var currentTimestamp = new Date().getTime();
+        dateSigned.attr('id', 'dateSigned' + currentTimestamp);
+        dateSigned.draggable();
+        addMouseEvents(dateSigned);
+        //dateSigned.selectize();
+        addElementProperties(dateSigned, 'DATE')
+      }
+
+      // TextField function
+      document.getElementById("idTextField").onclick = function() {
+        x = x + 10
+        y = y + 10
+        var textField = svgDocument.rect(300, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var currentTimestamp = new Date().getTime();
+        textField.attr('id', 'textField' + currentTimestamp);
+        textField.draggable();
+        addMouseEvents(textField);
+        //textField.selectize();
+        addElementProperties(textField, 'TEXTFIELD')
+      }
+
+      // CheckBox function
+      document.getElementById("idCheckBox").onclick = function() {
+        x = x + 10
+        y = y + 10
+        var checkBox = svgDocument.rect(30, 30).fill('#ddeaff').stroke({ width: 1 }).move(x,y)
+        var currentTimestamp = new Date().getTime();
+        checkBox.attr('id', 'checkBox' + currentTimestamp);
+        checkBox.radius(50);
+        checkBox.draggable();
+        addMouseEvents(checkBox);
+        //checkBox.selectize();
+        addElementProperties(checkBox, 'CHECKBOX')
+      }
+
+      function addElementProperties(el, type) {
+        var elProperties = {
+          id: null,
+          type: null,
+          x: 0,
+          y: 0,
+          objectProperty: null,
+          pageDetails: null,
+          documentId: null,
+          RecipientDetails: null,
+        };
+
+        // Setting default values
+        elProperties.id = el.attr('id');
+        elProperties.type = type;
+        elProperties.x = el.attr('x');
+        elProperties.y = el.attr('y');
+        elProperties.RecipientDetails = reciepentSelected
+        objStore.push(elProperties);
+      }
+
+      function addMouseEvents(el) {
+        var elementID = el.attr('id');
+        document.getElementById(elementID).addEventListener('mousedown', onTagSelected, false);
+        document.getElementById(elementID).addEventListener('mouseup', onTagUnselected, false);
+      }
+
+      function onTagSelected(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.instance.selectize({rotationPoint: false, pointSize: 5})
+      }
+
+      function onTagUnselected(e) {
+        this.instance.selectize(false)
+        var elementID = this.instance.attr('id')
+        var elProperties = objStore.find(x => x.id === elementID);
+        elProperties.x = this.instance.attr('x')
+        elProperties.y = this.instance.attr('y')
+      }
+
+      function getSelectedReciepent(recp) {
+        reciepentSelected = recp
+      }
+    </script>
+  </body>
+</html>
