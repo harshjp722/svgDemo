@@ -68,7 +68,7 @@
     <script src="Scripts/svg.select.js"></script>
     <script type="text/javascript">
       var idSVGDocument = document.getElementById("svgDocument");
-      var x = 0, y = 0, reciepentSelected, fillColor;
+      var x = 0, y = 0, reciepentSelected, fillColor, cbr = 50;
       var objStore = [];
       var svgDocument = SVG('svgDocument').size((idSVGDocument.offsetWidth - 3), idSVGDocument.offsetHeight).fill('#f06');
       var textFontProperties = { family: 'Helvetica', size: 19, leading: '1.5em' };
@@ -91,8 +91,8 @@
         signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
         signaturePoint.draggable();
 
-        var signaturePointBox = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 })
-        signaturePoint.add(signaturePointBox)
+        var pointBox = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 })
+        signaturePoint.add(pointBox)
         var text = svgDocument.text("Signature").move(35,10).font(textFontProperties)
         signaturePoint.add(text)
         //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
@@ -105,10 +105,16 @@
       document.getElementById("idDateSigned").onclick = function() {
         x = x + 10
         y = y + 10
-        var dateSigned = svgDocument.rect(150, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
+        var dateSigned = svgDocument.group().move(x,y)
         var currentTimestamp = new Date().getTime();
         dateSigned.attr('id', 'dateSigned' + currentTimestamp);
         dateSigned.draggable();
+
+        var pointBox = svgDocument.rect(150, 30).fill(fillColor).stroke({ width: 1 })
+        dateSigned.add(pointBox)
+        var text = svgDocument.text("Date Signed").move(5,2).font(textFontProperties)
+        dateSigned.add(text)
+
         addMouseEvents(dateSigned);
         //dateSigned.selectize();
         addElementProperties(dateSigned, 'DATE')
@@ -118,10 +124,16 @@
       document.getElementById("idTextField").onclick = function() {
         x = x + 10
         y = y + 10
-        var textField = svgDocument.rect(300, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
+        var textField = svgDocument.group().move(x,y)
         var currentTimestamp = new Date().getTime();
         textField.attr('id', 'textField' + currentTimestamp);
         textField.draggable();
+
+        var pointBox = svgDocument.rect(300, 30).fill(fillColor).stroke({ width: 1 })
+        textField.add(pointBox)
+        var text = svgDocument.text("Text . . .").move(5,2).font(textFontProperties)
+        textField.add(text)
+
         addMouseEvents(textField);
         //textField.selectize();
         addElementProperties(textField, 'TEXTFIELD')
@@ -131,11 +143,16 @@
       document.getElementById("idCheckBox").onclick = function() {
         x = x + 10
         y = y + 10
-        var checkBox = svgDocument.rect(30, 30).fill(fillColor).stroke({ width: 1 }).move(x,y)
+        var checkBox = svgDocument.group().move(x,y)
         var currentTimestamp = new Date().getTime();
         checkBox.attr('id', 'checkBox' + currentTimestamp);
-        checkBox.radius(50);
         checkBox.draggable();
+
+        var pointBox = svgDocument.rect(30, 30).fill(fillColor).stroke({ width: 1 }).radius(cbr)
+        checkBox.add(pointBox)
+        var text = svgDocument.text("CheckBox Label").move(40,2).font(textFontProperties)
+        checkBox.add(text)
+
         addMouseEvents(checkBox);
         //checkBox.selectize();
         addElementProperties(checkBox, 'CHECKBOX')
