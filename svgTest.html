@@ -14,8 +14,14 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <style type="text/css">
-      g {
+      g, .tagSelector {
         cursor: move;
+        z-index: 10;
+        width: 100%;
+        padding: 7px 20px;
+        color: white;
+        text-align: center;
+        border-radius: 4px;
       }
     </style>
   </head>
@@ -37,28 +43,22 @@
           <table style="width: 100%;">
             <tr>
               <td style="padding: 10px;">
-                <!-- <img class="draggable draggable-droppable" src="buttons_PNG10.png" height="34" width="133"> -->
-                <button type="button" class="btn btn-block" id="idTextField"> Text Field </button>
+                <label class="tagSelector label-default" data-type="TEXTFIELD">Text Field</label>
               </td>
               <td style="padding: 10px;">
-                <button type="button" class="btn btn-block" id="idSignature"> Signature </button>
+                <label class="tagSelector label-default" data-type="SIGN">Signature</label>
               </td>
             </tr>
             <tr>
               <td style="padding: 10px;">
-                <button type="button" class="btn btn-block" id="idDateSigned"> Date Signed </button>
+                <label class="tagSelector label-default" data-type="DATE">Date Signed</label>
               </td>
               <td style="padding: 10px;">
-                <button type="button" class="btn btn-block" id="idCheckBox"> CheckBox </button>
+                <label class="tagSelector label-default" data-type="CHECKBOX">CheckBox</label>
               </td>
             </tr>
           </table>
           <hr />
-
-          <div id="button" style="display: block; padding: 15px; background-color: #696969; cursor: move; z-index: 1000; color: white; font-size: 18px; text-align: center;">
-            Test draggable
-          </div>
-          <br />
           <div class="form-group text-center">
             <button type="button" name="deleteTag" class="btn btn-danger" onclick="deleteSelectedTag(lastSelectedElement.id)"> Delete Last Tag</button>
             <!-- <button type="button" name="deleteAllTags" class="btn btn-danger" onclick="deleteSelectedTag(lastSelectedElement.id)"> Delete All Tags</button> -->
@@ -75,7 +75,6 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
     <script src="Scripts/svg.js"></script>
-    <!-- <script src="Scripts/svg.import.js"></script> -->
     <script src="Scripts/svg.draggable.js"></script>
     <script src="Scripts/svg.select.js"></script>
     <script type="text/javascript">
@@ -92,51 +91,29 @@
       // --> alert('Left - ' + coord.left + ' | Top - ' + coord.top)
 
       function pageLoad() {
-        document.querySelector('svg').addEventListener('mousemove', onMouseMove, false);
+        $(".tagSelector").draggable({
+            revert: "invalid",
+            helper: "clone",
+            refreshPositions: true,
+            opacity: 0.7,
+            scroll: false,
+            drag: function (event, ui) {
+                ui.helper.addClass("draggable");
+            },
+            stop: function (event, ui) {
+                ui.helper.removeClass("draggable");
+            }
+        });
 
-        // $('#button').draggable({
-        //   containment: "#svgDocument",
-        //   scroll: false,
-        //   // helper: "clone",
-        //   opacity: 0.7,
-        //   start: function() {
-        //     // function on start of drag
-        //   },
-        //   drag: function() {
-        //     // function on while dragging
-        //   },
-        //   stop: function(e) {
-        //     debugger;
-        //     // function on stop of drag
-        //     console.log('Client(x,y) = (' + e.clientX + ',' + e.clientY + ')')
-        //     createTag(e.clientX, e.clientY, 'Client')
-        //     console.log('Offset(x,y) = (' + e.offsetX + ',' + e.offsetY + ')')
-        //     createTag(e.offsetX, e.offsetY, 'Offset')
-        //     console.log('Mouse(x,y) = (' + mouseX + ',' + mouseY + ')')
-        //     createTag(mouseX, mouseY, '@Mouse')
-        //   }
-        // });
-        $("#button").draggable({
-        revert: "invalid",
-         helper: "clone",
-        refreshPositions: true,
-        drag: function (event, ui) {
-            ui.helper.addClass("draggable");
-        },
-        stop: function (event, ui) {
-            ui.helper.removeClass("draggable");
-
-        }
-    });
-    $("#svgDocument").droppable({
-        drop: function (event, ui) {
+        $("#svgDocument").droppable({
+            drop: function (event, ui) {
               ui.draggable.addClass("dropped");
-              createTag((ui.position.left- $(this).offset().left  ), ui.position.top, 'Offset');
-        }
-    });
+              createTag((ui.position.left- $(this).offset().left  ), ui.position.top, ui.draggable.attr('data-type'));
+            }
+        });
+
         var dd = document.getElementById('ddReciepent');
         reciepentSelected = dd.value;  //'Reciepent1ID'
-        //fillColor = parseInt(reciepentSelected) == 1 ? '#ddeaff' : '#ffffe6'; //Default tag color
         for (var i = 0; i < dd.length; i++) {
           let reciepentsColor = { id: dd.options[i].value, value: colors[i] }
           recpColor.push(reciepentsColor);
@@ -144,82 +121,6 @@
         tagColor = recpColor.find(x => x.id === reciepentSelected).value;
       }
       window.onload = pageLoad;  // invoke pageLoad after all content is loaded
-
-      // Signature function
-      document.getElementById("idSignature").onclick = function() {
-        x = x + 10
-        y = y + 10
-        var signaturePoint = svgDocument.group().move(x,y)
-        var currentTimestamp = new Date().getTime();
-        signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
-        signaturePoint.draggable();
-
-        var pointBox = svgDocument.rect(150, 50).fill(tagColor).stroke({ width: 1 })
-        signaturePoint.add(pointBox)
-        var text = svgDocument.text("Signature").move(35,10).font(textFontProperties)
-        signaturePoint.add(text)
-        //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
-
-        addMouseEvents(signaturePoint);
-        addElementProperties(signaturePoint, 'SIGN')
-      }
-
-      // Date Signed function
-      document.getElementById("idDateSigned").onclick = function() {
-        x = x + 10
-        y = y + 10
-        var dateSigned = svgDocument.group().move(x,y)
-        var currentTimestamp = new Date().getTime();
-        dateSigned.attr('id', 'dateSigned' + currentTimestamp);
-        dateSigned.draggable();
-
-        var pointBox = svgDocument.rect(150, 30).fill(tagColor).stroke({ width: 1 })
-        dateSigned.add(pointBox)
-        var text = svgDocument.text("Date Signed").move(5,2).font(textFontProperties)
-        dateSigned.add(text)
-
-        addMouseEvents(dateSigned);
-        //dateSigned.selectize();
-        addElementProperties(dateSigned, 'DATE')
-      }
-
-      // TextField function
-      document.getElementById("idTextField").onclick = function() {
-        x = x + 10
-        y = y + 10
-        var textField = svgDocument.group().move(x,y)
-        var currentTimestamp = new Date().getTime();
-        textField.attr('id', 'textField' + currentTimestamp);
-        textField.draggable();
-
-        var pointBox = svgDocument.rect(300, 30).fill(tagColor).stroke({ width: 1 })
-        textField.add(pointBox)
-        var text = svgDocument.text("Text . . .").move(5,2).font(textFontProperties)
-        textField.add(text)
-
-        addMouseEvents(textField);
-        //textField.selectize();
-        addElementProperties(textField, 'TEXTFIELD')
-      }
-
-      // CheckBox function
-      document.getElementById("idCheckBox").onclick = function() {
-        x = x + 10
-        y = y + 10
-        var checkBox = svgDocument.group().move(x,y)
-        var currentTimestamp = new Date().getTime();
-        checkBox.attr('id', 'checkBox' + currentTimestamp);
-        checkBox.draggable();
-
-        var pointBox = svgDocument.rect(30, 30).fill(tagColor).stroke({ width: 1 }).radius(cbr)
-        checkBox.add(pointBox)
-        var text = svgDocument.text("CheckBox Label").move(40,2).font(textFontProperties)
-        checkBox.add(text)
-
-        addMouseEvents(checkBox);
-        //checkBox.selectize();
-        addElementProperties(checkBox, 'CHECKBOX')
-      }
 
       function addElementProperties(el, type) {
         var elProperties = {
@@ -281,28 +182,63 @@
         lastSelectedElement = null;
       }
 
-      function createTag(x,y, text) {
-        var signaturePoint = svgDocument.group().move(x,y)
-        var currentTimestamp = new Date().getTime();
-        signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
-        signaturePoint.draggable();
+      function createTag(x,y, type) {
+        if (type === 'SIGN') {
+          var signaturePoint = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
+          signaturePoint.draggable();
 
-        var pointBox = svgDocument.rect(150, 50).fill(tagColor).stroke({ width: 1 })
-        signaturePoint.add(pointBox)
-        var text = svgDocument.text(text).move(35,10).font(textFontProperties)
-        signaturePoint.add(text)
-        //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
+          var pointBox = svgDocument.rect(150, 50).fill(tagColor).stroke({ width: 1 })
+          signaturePoint.add(pointBox)
+          var text = svgDocument.text("Signature").move(35,10).font(textFontProperties)
+          signaturePoint.add(text)
+          //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
 
-        addMouseEvents(signaturePoint);
-        addElementProperties(signaturePoint, 'SIGN')
+          addMouseEvents(signaturePoint);
+          addElementProperties(signaturePoint, type)
+        } else if (type === 'DATE') {
+          var dateSigned = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          dateSigned.attr('id', 'dateSigned' + currentTimestamp);
+          dateSigned.draggable();
+
+          var pointBox = svgDocument.rect(150, 30).fill(tagColor).stroke({ width: 1 })
+          dateSigned.add(pointBox)
+          var text = svgDocument.text("Date Signed").move(5,2).font(textFontProperties)
+          dateSigned.add(text)
+
+          addMouseEvents(dateSigned);  //dateSigned.selectize();
+          addElementProperties(dateSigned, type)
+        } else if (type === 'TEXTFIELD') {
+          var textField = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          textField.attr('id', 'textField' + currentTimestamp);
+          textField.draggable();
+
+          var pointBox = svgDocument.rect(300, 30).fill(tagColor).stroke({ width: 1 })
+          textField.add(pointBox)
+          var text = svgDocument.text("Text . . .").move(5,2).font(textFontProperties)
+          textField.add(text)
+
+          addMouseEvents(textField);   //textField.selectize();
+          addElementProperties(textField, type)
+        } else if (type === 'CHECKBOX') {
+          var checkBox = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          checkBox.attr('id', 'checkBox' + currentTimestamp);
+          checkBox.draggable();
+
+          var pointBox = svgDocument.rect(30, 30).fill(tagColor).stroke({ width: 1 }).radius(cbr)
+          checkBox.add(pointBox)
+          var text = svgDocument.text("CheckBox Label").move(40,2).font(textFontProperties)
+          checkBox.add(text)
+
+          addMouseEvents(checkBox);  //checkBox.selectize();
+          addElementProperties(checkBox, type)
+        }
       }
 
-      function onMouseMove(e){
-        //console.log(e)
-        mouseX = e.offsetX;
-        mouseY = e.offsetX;
-      }
     </script>
-    <!-- <script src="Scripts/interact-functions.js"></script> -->
   </body>
 </html>
