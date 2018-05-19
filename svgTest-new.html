@@ -96,7 +96,7 @@
       var height = idSVGDocument.offsetHeight
       var svgDocument = SVG('svgDocument').size(600, (485 * pdfImageArray.length)).fill('#f06')//.viewbox(0, 0, 100, 100);
       svgDocument.attr('class', 'svgDoc');
-      //var image = svgDocument.image('blue-abstract-background-48.jpg', 80, 100).move(10,0)
+      var image = svgDocument.image('img/blue-abstract-background-48.jpg', 612, 792).move(225,0)
 
       function imgLoader() {
         let i = 0, imgHeight = 0;
@@ -154,7 +154,7 @@
         }
         tagColor = recpColor.find(x => x.id === reciepentSelected).value;
 
-        imgLoader();
+        //imgLoader();
       }
       window.onload = pageLoad;  // invoke pageLoad after all content is loaded
 
