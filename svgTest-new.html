@@ -14,7 +14,7 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <style type="text/css">
-      rect {
+      g {
         cursor: move;
       }
       .tagSelector {
@@ -96,7 +96,7 @@
       var height = idSVGDocument.offsetHeight
       var svgDocument = SVG('svgDocument').size(600, (485 * pdfImageArray.length)).fill('#f06')//.viewbox(0, 0, 100, 100);
       svgDocument.attr('class', 'svgDoc');
-      var image = svgDocument.image('img/blue-abstract-background-48.jpg', 612, 792).move(225,0)
+      //var image = svgDocument.image('blue-abstract-background-48.jpg', 80, 100).move(10,0)
 
       function imgLoader() {
         let i = 0, imgHeight = 0;
@@ -154,7 +154,7 @@
         }
         tagColor = recpColor.find(x => x.id === reciepentSelected).value;
 
-        //imgLoader();
+        imgLoader();
       }
       window.onload = pageLoad;  // invoke pageLoad after all content is loaded
 
@@ -169,7 +169,11 @@
           RecipientDetails: null,
           objectProperty: null,
         };
-
+        
+        if (lastSelectedElement != null) {
+          var element = SVG.get(lastSelectedElement.id);
+          element.selectize(false);
+        }
         // Setting default values
         elProperties.id = el.attr('id');
         elProperties.type = type;
@@ -186,6 +190,7 @@
           regex: 'testPattern'
         }
         lastSelectedElement = elProperties;
+        el.selectize({rotationPoint: false, pointSize: 5});
         objStore.push(elProperties);
       }
 
@@ -197,14 +202,18 @@
 
       function onTagSelected(e) {
         e.preventDefault();
-        e.stopPropagation();
+        e.stopPropagation();        
+        if (lastSelectedElement != null) {
+          var element = SVG.get(lastSelectedElement.id);
+          element.selectize(false);
+        }
         this.instance.selectize({rotationPoint: false, pointSize: 5})
         var elementID = this.instance.attr('id')
         lastSelectedElement = objStore.find(x => x.id === elementID);
       }
 
       function onTagUnselected(e) {
-        this.instance.selectize(false)
+        //this.instance.selectize(false)
         var elementID = this.instance.attr('id')
         var elProperties = objStore.find(x => x.id === elementID);
         elProperties.x = this.instance.gbox().x; //.attr('x')
@@ -218,8 +227,9 @@
       }
 
       function deleteSelectedTag(tagID) {
-        var tag = document.getElementById(tagID);
-        tag.remove();
+        var element = SVG.get(tagID);
+        element.selectize(false);
+        element.remove();
         let index = objStore.map(function(item) { return item.id; }).indexOf(tagID);
         if (index !== -1) {
             objStore.splice(index, 1);
