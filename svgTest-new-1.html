@@ -216,12 +216,13 @@
         }
         // Setting default values
         let elBox = el.gbox();
+        let documentDetails = updateDocumentId(elBox);
         elProperties.id = el.attr('id');
         elProperties.type = type;
         elProperties.x = elBox.x; //el.attr('x');
         elProperties.y = elBox.y; //el.attr('y');
-        elProperties.pageNo = 1;
-        elProperties.documentId = svgDocument.attr('id');
+        elProperties.pageNo = documentDetails.pageNo;
+        elProperties.documentId = documentDetails.documentID;
         elProperties.RecipientDetails = { id: reciepentSelected, text: $("#ddReciepent option:selected").text() };
         elProperties.objectProperty = {
           name: type + ' field',
@@ -256,15 +257,20 @@
 
       function onTagUnselected(e) {
         //this.instance.selectize(false)
-        let invalidDrop = checkInvalidPosition(this.instance.gbox());
+        let elBox = this.instance.gbox();
+        let invalidDrop = checkInvalidPosition(elBox);
         var elementID = this.instance.attr('id')
-        if (!invalidDrop) {          
+        if (!invalidDrop) {
+          let documentDetails = updateDocumentId(elBox);
           var elProperties = objStore.find(x => x.id === elementID);
-          elProperties.x = this.instance.gbox().x; //.attr('x')
-          elProperties.y = this.instance.gbox().y; //.attr('y')  
-        } else {
+          elProperties.x = elBox.x; //.attr('x')
+          elProperties.y = elBox.y; //.attr('y')          
+          elProperties.pageNo = documentDetails.pageNo;
+          elProperties.documentId = documentDetails.documentID;
+          lastSelectedElement = elProperties;
+        } else {          
           createTag(lastSelectedElement.x, lastSelectedElement.y, lastSelectedElement.type);
-          deleteSelectedTag(elementID);
+          deleteSelectedTag(elementID, false);
         }
       }
 
@@ -274,7 +280,7 @@
         tagColor = recpColor.find(x => x.id === reciepentSelected).value;
       }
 
-      function deleteSelectedTag(tagID) {
+      function deleteSelectedTag(tagID, rmFlag) {
         var element = SVG.get(tagID);
         element.selectize(false);
         element.remove();
@@ -282,7 +288,9 @@
         if (index !== -1) {
             objStore.splice(index, 1);
         }
-        lastSelectedElement = null;
+        if (rmFlag) {
+          lastSelectedElement = null;
+        }
       }
 
       function createTag(x,y, type) {
@@ -385,6 +393,18 @@
             }
           }
           i++;
+        });
+        return response;
+      }
+
+      function updateDocumentId(elBox) {
+        let i = 0, response = {pageNo: 0, documentID: null};        
+        documentList.forEach(docPrpty => {
+          i = i + 1;
+          if (elBox.y >= docPrpty.gBoxProperties.y && elBox.y2  <= docPrpty.gBoxProperties.y2) {
+            response.pageNo = i;
+            response.documentID = docPrpty.id;
+          }          
         });
         return response;
       }
