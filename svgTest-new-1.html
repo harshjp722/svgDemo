@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SVG Library - Funstions for Esigning</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/svg.select.css">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      g {
+        cursor: move;
+      }
+
+      td {
+        padding: 8px 0 !important;
+      }
+
+      .tagSelector {
+        cursor: move;
+        z-index: 10;
+        width: 150px;
+        padding: 7px 15px;
+        color: white;
+        text-align: center;
+        border-radius: 4px;
+      }
+
+      .svgDoc{
+        /* display: block;
+        width: 50%;
+        height: auto; */
+        position: absolute;
+        left: 0;        
+      }
+      
+      .svgContainer {
+        height: 680px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        background-color: grey;
+        /* position: relative; */
+      }
+
+      #svgDocument {
+        /* border: 1px solid black; */
+        position: relative;
+        display: block;
+        margin: 0 auto;
+        width: 602px;
+        /* height: 680px;
+        overflow-y: scroll;
+        overflow-x: hidden; */
+        clear: both;
+      }
+
+    </style>
+  </head>
+  <body>
+    <h1 class="text-center">eSigning Sample</h1>
+    <hr class="separator" />
+    <div class="container-fluid">
+      <div class="row" id="dragZone">
+        <div class="col-md-3">
+          <div class="form-group text-center">
+            <label for="ddReciepent"> Select Reciepent</label>
+            <select id="ddReciepent" class="form-control" onchange="getSelectedReciepent(this.value)">
+              <option value="1" selected>Reciepent 1</option>
+              <option value="2">Reciepent 2</option>
+            </select>
+            <p class="help-block">Adds tags for selected reciepents</p>
+          </div>
+          <hr />
+          <div class="table-responsive">
+          <table style="width: 100%;" class="table">
+            <tr>
+              <td>
+                <label class="tagSelector label-default" data-type="TEXTFIELD">Text Field</label>
+              </td>
+              <td>
+                <label class="tagSelector label-default" data-type="SIGN">Signature</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label class="tagSelector label-default" data-type="DATE">Date Signed</label>
+              </td>
+              <td>
+                <label class="tagSelector label-default" data-type="CHECKBOX">CheckBox</label>
+              </td>
+            </tr>
+          </table>
+        </div>
+          <hr />
+          <div class="form-group text-center">
+            <button type="button" name="deleteTag" class="btn btn-danger" onclick="deleteSelectedTag(lastSelectedElement.id)"> Delete Last Tag</button>
+            <!-- <button type="button" name="deleteAllTags" class="btn btn-danger" onclick="deleteSelectedTag(lastSelectedElement.id)"> Delete All Tags</button> -->
+          </div>
+        </div>
+        <div class="col-md-9 svgContainer">
+          <div id="svgDocument">
+          </div>
+        </div>
+        <div class="clearfix"> </div>
+        <br />
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+    <script src="Scripts/svg.js"></script>
+    <script src="Scripts/svg.draggable.js"></script>
+    <script src="Scripts/svg.select.js"></script>
+    <script type="text/javascript">
+
+      var x = 0, y = 0, cbr = 50, tagColor, reciepentSelected, lastSelectedElement, imgBasePath = 'img/agent_300786/';
+      var objStore = [], colors = colorsList(), recpColor = [], pdfImageArray = imgList(), documentList = [];
+      var textFontProperties = { family: 'Helvetica', size: 19, leading: '1.5em' };
+      
+      var idSVGDocument = document.getElementById("svgDocument");         
+      var width = (idSVGDocument.offsetWidth - 3)
+      var height = idSVGDocument.offsetHeight
+      var svgDocument = SVG('svgDocument').size(600, (820 * pdfImageArray.length)).fill('#f06')//.viewbox(0, 0, 100, 100);
+      svgDocument.attr('class', 'svgDoc');      
+      //var image = svgDocument.image('blue-abstract-background-48.jpg', 80, 100).move(10,0)
+
+      function imgLoader() {
+        let i = 0, imgHeight = 0;
+        pdfImageArray.forEach(element => {
+          //debugger;
+          var docProperties = {
+            id: null,
+            serialNumber: 0,
+            imageName: null,
+            gBoxProperties: null
+          }
+          var docGroup = svgDocument.group()
+          var currentTimestamp = new Date().getTime();
+          docGroup.attr('id', 'document' + currentTimestamp);          
+          var image = svgDocument.image(imgBasePath + element, 600, 792).move(0, i === 0 ? 0 : imgHeight)      
+          imgHeight = (imgHeight + 820)    
+          docGroup.add(image);
+          docProperties.id = docGroup.attr('id');
+          docProperties.serialNumber = i;
+          docProperties.imageName = element;
+          docProperties.gBoxProperties = docGroup.gbox();
+          documentList.push(docProperties);
+          i++;
+        });       
+      }
+      
+      // --> Method to get left and Top of element in js.
+      // --> var coord = svgDocument.getBoundingClientRect();
+      // --> alert('Left - ' + coord.left + ' | Top - ' + coord.top)
+
+      function pageLoad() {
+        imgLoader();
+        let svgId = "#" + svgDocument.attr('id');
+        $('#svgDocument').attr('style', 'height: ' + (820 * pdfImageArray.length) + 'px;');
+
+        $(".tagSelector").draggable({
+            revert: "invalid",
+            helper: "clone",
+            appendTo : "#svgDocument",
+            refreshPositions: true,
+            opacity: 0.7,
+            scroll: false,
+            drag: function (event, ui) {
+                ui.helper.addClass("draggable");
+            },
+            stop: function (event, ui) {
+                ui.helper.removeClass("draggable");
+            }
+        });
+
+        $('#svgDocument').droppable({
+            drop: function (event, ui) {
+              //(ui.position.left- $(this).offset().left  )
+              ui.draggable.addClass("dropped");
+              createTag(ui.position.left, ui.position.top, ui.draggable.attr('data-type'));
+            }
+        });
+
+        var dd = document.getElementById('ddReciepent');
+        reciepentSelected = dd.value;  //'Reciepent1ID'
+        for (var i = 0; i < dd.length; i++) {
+          let reciepentsColor = { id: dd.options[i].value, value: colors[i] }
+          recpColor.push(reciepentsColor);
+        }
+        tagColor = recpColor.find(x => x.id === reciepentSelected).value;        
+      }
+      window.onload = pageLoad;  // invoke pageLoad after all content is loaded
+
+      function addElementProperties(el, type) {
+        var elProperties = {
+          id: null,
+          type: null,
+          x: 0,
+          y: 0,
+          pageNo: 0,
+          documentId: null,
+          RecipientDetails: null,
+          objectProperty: null,
+          elementDesignProperties: null
+        };
+        
+        if (lastSelectedElement != null) {
+          var element = SVG.get(lastSelectedElement.id);
+          element.selectize(false);
+        }
+        // Setting default values
+        let elBox = el.gbox();
+        elProperties.id = el.attr('id');
+        elProperties.type = type;
+        elProperties.x = elBox.x; //el.attr('x');
+        elProperties.y = elBox.y; //el.attr('y');
+        elProperties.pageNo = 1;
+        elProperties.documentId = svgDocument.attr('id');
+        elProperties.RecipientDetails = { id: reciepentSelected, text: $("#ddReciepent option:selected").text() };
+        elProperties.objectProperty = {
+          name: type + ' field',
+          value: type + ' value',
+          required: true,
+          font: textFontProperties,
+          regex: 'testPattern'
+        }
+        elProperties.elementDesignProperties = elBox;
+        lastSelectedElement = elProperties;
+        el.selectize({rotationPoint: false, pointSize: 5});
+        objStore.push(elProperties);
+      }
+
+      function addMouseEvents(el) {
+        var elementID = el.attr('id');
+        document.getElementById(elementID).addEventListener('mousedown', onTagSelected, false);
+        document.getElementById(elementID).addEventListener('mouseup', onTagUnselected, false);
+      }
+
+      function onTagSelected(e) {
+        e.preventDefault();
+        e.stopPropagation();        
+        if (lastSelectedElement != null) {
+          var element = SVG.get(lastSelectedElement.id);
+          element.selectize(false);
+        }
+        this.instance.selectize({rotationPoint: false, pointSize: 5})
+        var elementID = this.instance.attr('id')
+        lastSelectedElement = objStore.find(x => x.id === elementID);
+      }
+
+      function onTagUnselected(e) {
+        //this.instance.selectize(false)
+        let invalidDrop = checkInvalidPosition(this.instance.gbox());
+        var elementID = this.instance.attr('id')
+        if (!invalidDrop) {          
+          var elProperties = objStore.find(x => x.id === elementID);
+          elProperties.x = this.instance.gbox().x; //.attr('x')
+          elProperties.y = this.instance.gbox().y; //.attr('y')  
+        } else {
+          createTag(lastSelectedElement.x, lastSelectedElement.y, lastSelectedElement.type);
+          deleteSelectedTag(elementID);
+        }
+      }
+
+      function getSelectedReciepent(recp) {
+        reciepentSelected = recp;
+        //fillColor = (parseInt(recp) == 1) ? '#ddeaff' : '#ffffe6';
+        tagColor = recpColor.find(x => x.id === reciepentSelected).value;
+      }
+
+      function deleteSelectedTag(tagID) {
+        var element = SVG.get(tagID);
+        element.selectize(false);
+        element.remove();
+        let index = objStore.map(function(item) { return item.id; }).indexOf(tagID);
+        if (index !== -1) {
+            objStore.splice(index, 1);
+        }
+        lastSelectedElement = null;
+      }
+
+      function createTag(x,y, type) {
+        if (type === 'SIGN') {
+          var signaturePoint = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          signaturePoint.attr('id', 'SignaturePoint' + currentTimestamp);
+          signaturePoint.draggable();
+
+          var pointBox = svgDocument.rect(150, 50).fill(tagColor).stroke({ width: 1 })
+          signaturePoint.add(pointBox)
+          var text = svgDocument.text("Signature").move(35,10).font(textFontProperties)
+          signaturePoint.add(text)
+          //var signaturePoint = svgDocument.rect(150, 50).fill(fillColor).stroke({ width: 1 }).move(x,y)
+
+          addMouseEvents(signaturePoint);
+          addElementProperties(signaturePoint, type)
+        } else if (type === 'DATE') {
+          var dateSigned = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          dateSigned.attr('id', 'dateSigned' + currentTimestamp);
+          dateSigned.draggable();
+
+          var pointBox = svgDocument.rect(150, 30).fill(tagColor).stroke({ width: 1 })
+          dateSigned.add(pointBox)
+          var text = svgDocument.text("Date Signed").move(5,2).font(textFontProperties)
+          dateSigned.add(text)
+
+          addMouseEvents(dateSigned);  //dateSigned.selectize();
+          addElementProperties(dateSigned, type)
+        } else if (type === 'TEXTFIELD') {
+          var textField = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          textField.attr('id', 'textField' + currentTimestamp);
+          textField.draggable();
+
+          var pointBox = svgDocument.rect(300, 30).fill(tagColor).stroke({ width: 1 })
+          textField.add(pointBox)
+          var text = svgDocument.text("Text . . .").move(5,2).font(textFontProperties)
+          textField.add(text)
+
+          addMouseEvents(textField);   //textField.selectize();
+          addElementProperties(textField, type)
+        } else if (type === 'CHECKBOX') {
+          var checkBox = svgDocument.group().move(x,y)
+          var currentTimestamp = new Date().getTime();
+          checkBox.attr('id', 'checkBox' + currentTimestamp);
+          checkBox.draggable();
+
+          var pointBox = svgDocument.rect(30, 30).fill(tagColor).stroke({ width: 1 }).radius(cbr)
+          checkBox.add(pointBox)
+          var text = svgDocument.text("CheckBox Label").move(40,2).font(textFontProperties)
+          checkBox.add(text)
+
+          addMouseEvents(checkBox);  //checkBox.selectize();
+          addElementProperties(checkBox, type)
+        }
+      }
+
+      function imgList() {
+          return [
+              'agent_300786-1.png',
+              'agent_300786-2.png',
+              'agent_300786-3.png',
+              'agent_300786-4.png',
+              'agent_300786-5.png',
+              'agent_300786-6.png',
+              'agent_300786-7.png',
+              'agent_300786-8.png',
+              'agent_300786-9.png'
+          ];
+      }
+
+      function colorsList() {
+          return [
+              '#ddeaff', 
+              '#ffffe6'
+          ];
+      }
+
+      function checkInvalidPosition(elBox) {
+        let i = 0, response = false;        
+        documentList.forEach(docPrpty => {
+          if (elBox.x < docPrpty.gBoxProperties.x || elBox.x2  > docPrpty.gBoxProperties.x2){
+            response = true;
+          }
+          let nextDocPrpty = null;
+          if(i >= 0 && i < documentList.length - 1) {
+            nextDocPrpty = documentList[i+1];
+          }
+
+          if (nextDocPrpty != null){
+            if ((elBox.y > docPrpty.gBoxProperties.y2 || elBox.y2 > docPrpty.gBoxProperties.y2) 
+                && (elBox.y < nextDocPrpty.gBoxProperties.y || elBox.y2 < nextDocPrpty.gBoxProperties.y)) {
+                response = true;
+            }
+          } else {
+            if (elBox.y2 > docPrpty.gBoxProperties.y2){
+              response = true;
+            }
+          }
+          i++;
+        });
+        return response;
+      }
+    </script>
+  </body>
+</html>
